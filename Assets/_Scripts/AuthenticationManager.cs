@@ -1,3 +1,4 @@
+using Firebase.Database;
 using Firebase.Extensions;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,8 +7,11 @@ using UnityEngine;
 
 public class AuthenticationManager : MonoBehaviour
 {
+    [Header("Firebase References")]
     Firebase.FirebaseApp app; // Declaration of FirebaseApp variable
     Firebase.Auth.FirebaseAuth auth; // Declaration of FirebaseAuth variable
+    public string username;
+    public string userID;
 
     [Header("Login Panel References")]
     [SerializeField] TMP_InputField loginEmailID;
@@ -23,6 +27,11 @@ public class AuthenticationManager : MonoBehaviour
     [Header("Forgot Password Panel References")]
     [SerializeField] TMP_InputField forgotPassEmailID;
     [SerializeField] TextMeshProUGUI forgotPassDebugText;
+
+    private void Awake()
+    {
+        DontDestroyOnLoad(this.gameObject);
+    }
 
     private void Start()
     {
@@ -56,6 +65,12 @@ public class AuthenticationManager : MonoBehaviour
     public void LoginAccount()
     {
         StartCoroutine(LoginCoroutine());
+       
+    }
+
+    public void ForgotPassword()
+    {
+        StartCoroutine(ForgotPasswordCoroutine());
     }
 
     #region Coroutine Functions
@@ -82,27 +97,10 @@ public class AuthenticationManager : MonoBehaviour
         // Firebase user has been created.
         Firebase.Auth.AuthResult result = createUserTask.Result;
 
-        // Set the display name of the user
-        Firebase.Auth.FirebaseUser user = result.User;
-        Firebase.Auth.UserProfile profile = new Firebase.Auth.UserProfile
-        {
-            DisplayName = createName.text
-        };
-
-        var profileTask = user.UpdateUserProfileAsync(profile);
-        yield return new WaitUntil(() => profileTask.IsCompleted);
-
-        if (profileTask.IsCanceled || profileTask.IsFaulted)
-        {
-            createDebugText.text = "Failed to set display name: " + profileTask.Exception;
-            yield break;
-        }
-
-        // Display name set successfully
-        Debug.LogFormat("Firebase user created successfully: {0} ({1})", user.DisplayName, user.UserId);
-        createDebugText.text = "User Created Successfully";
+        ClearInputFields();
+       
+        StartCoroutine(LoginCoroutine());
     }
-
 
     private IEnumerator LoginCoroutine()
     {
@@ -117,21 +115,75 @@ public class AuthenticationManager : MonoBehaviour
 
         if (signInTask.IsCanceled)
         {
-            Debug.LogError("SignInWithEmailAndPasswordAsync was canceled.");
+            loginDebugText.text = "Sign-In was canceled.";
             yield break;
         }
 
         if (signInTask.IsFaulted)
         {
-            Debug.LogError("SignInWithEmailAndPasswordAsync encountered an error: " + signInTask.Exception);
+            loginDebugText.text = "Sign-In encountered an error: " + signInTask.Exception;
             yield break;
         }
 
         // Firebase user has signed in.
-        Firebase.Auth.AuthResult result = signInTask.Result;
-        Debug.LogFormat("User signed in successfully: {0} ({1})",
-            result.User.DisplayName, result.User.UserId);
+        Firebase.Auth.AuthResult result = signInTask.Result;Debug.LogFormat("User signed in successfully: {0} ({1})",result.User.DisplayName, result.User.UserId);
+        loginDebugText.text = "Sign-In Succesfull";
+
+        username = result.User.DisplayName;
+        userID = result.User.UserId;
+
+        StartCoroutine(SaveUserData());
+
+        ClearInputFields();
+        UIManager.instance.SwitchScene();
+    }
+
+    private IEnumerator ForgotPasswordCoroutine()
+    {
+        Firebase.Auth.FirebaseAuth auth = Firebase.Auth.FirebaseAuth.DefaultInstance;
+        var forgotPasswordTask = auth.SendPasswordResetEmailAsync(forgotPassEmailID.text);
+
+        yield return new WaitUntil(() => forgotPasswordTask.IsCompleted);
+
+        if (forgotPasswordTask.IsCanceled)
+        {
+            forgotPassDebugText.text = "Password reset request was canceled";
+            yield break;
+        }
+
+        if (forgotPasswordTask.IsFaulted)
+        {
+            forgotPassDebugText.text = "Password reset request encountered an error: " + forgotPasswordTask.Exception;
+            yield break;
+        }
+
+        // Password reset email sent successfully
+        Debug.Log("Password reset email sent successfully to: " + forgotPassEmailID.text);
+        forgotPassDebugText.text = "Password reset email sent successfully";
+    }
+
+
+    private IEnumerator SaveUserData()
+    {
+        // Reference to the Firebase Realtime Database
+        DatabaseReference reference = FirebaseDatabase.DefaultInstance.RootReference;
+
+        // Store user data under the "users" node with the user's ID as the key
+        reference.Child("users").Child(userID).Child("userName").SetValueAsync(username);
+        reference.Child("users").Child(userID).Child("userId").SetValueAsync(userID);
+
+        yield return null;
     }
 
     #endregion
+
+    public void ClearInputFields()
+    {
+        loginEmailID.text = "";
+        loginPassword.text = "";
+        createName.text = "";
+        createEmailID.text = "";
+        createPassword.text = "";
+        forgotPassEmailID.text = "";
+    }
 }
