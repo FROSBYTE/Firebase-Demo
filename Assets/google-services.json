@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "580687409144",
+    "firebase_url": "https://firbase--learning-default-rtdb.firebaseio.com",
+    "project_id": "firbase--learning",
+    "storage_bucket": "firbase--learning.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:580687409144:android:00bf8c318fd757950eb00d",
+        "android_client_info": {
+          "package_name": "com.frosbytelearning.FirebaseLearning"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHl2dBVJjxaweaEHuNATrtgYRJrq3GIzk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
