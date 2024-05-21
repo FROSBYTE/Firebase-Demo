@@ -8,11 +8,16 @@ using UnityEngine;
 
 public class AuthenticationManager : MonoBehaviour
 {
+    public static AuthenticationManager Instance;
+
     [Header("Firebase References")]
     Firebase.FirebaseApp app; // Declaration of FirebaseApp variable
     Firebase.Auth.FirebaseAuth auth; // Declaration of FirebaseAuth variable
+
     public string username;
     public string userID;
+    public string age;
+    public string occupation;
 
     [Header("Login Panel References")]
     [SerializeField] TMP_InputField loginEmailID;
@@ -31,6 +36,7 @@ public class AuthenticationManager : MonoBehaviour
 
     private void Awake()
     {
+        Instance = this;
         DontDestroyOnLoad(this.gameObject);
     }
 
@@ -73,6 +79,11 @@ public class AuthenticationManager : MonoBehaviour
         StartCoroutine(ForgotPasswordCoroutine());
     }
 
+    public void GetUserData()
+    {
+        StartCoroutine(ReadUserDataCoroutine(userID));
+    }
+
     #region Coroutine Functions
 
     private IEnumerator CreateUserCoroutine()
@@ -98,9 +109,10 @@ public class AuthenticationManager : MonoBehaviour
         Firebase.Auth.AuthResult result = createUserTask.Result;
 
         createDebugText.text = "User Created Succesfully";
+        username = createName.text;
 
         ClearInputFields();
-       
+
         StartCoroutine(LoginCoroutine(createEmailID.text,createPassword.text));
     }
 
@@ -131,7 +143,6 @@ public class AuthenticationManager : MonoBehaviour
         Firebase.Auth.AuthResult result = signInTask.Result;Debug.LogFormat("User signed in successfully: {0} ({1})",result.User.DisplayName, result.User.UserId);
         loginDebugText.text = "Sign-In Succesfull";
 
-        username = result.User.DisplayName;
         userID = result.User.UserId;
 
         StartCoroutine(SaveUserData());
@@ -163,15 +174,18 @@ public class AuthenticationManager : MonoBehaviour
         forgotPassDebugText.text = "Password reset email sent successfully";
     }
 
-    private IEnumerator SaveUserData()
+    public IEnumerator SaveUserData()
     {
         // Reference to the Firebase Realtime Database
         DatabaseReference reference = FirebaseDatabase.DefaultInstance.RootReference;
 
-        Task setNameTask = reference.Child("users").Child(userID).Child("userName").SetValueAsync(username);
-        Task setIDTask = reference.Child("users").Child(userID).Child("userId").SetValueAsync(userID);
+        Task setNameTask = reference.Child("users").Child(userID).Child("UserName").SetValueAsync(username);
+        Task setIDTask = reference.Child("users").Child(userID).Child("UserId").SetValueAsync(userID);
+        Task setAgeTask = reference.Child("users").Child(userID).Child("Age").SetValueAsync(age);
+        Task setOccupationTask = reference.Child("users").Child(userID).Child("Occupation").SetValueAsync(occupation);
 
-        yield return Task.WhenAll(setNameTask, setIDTask);
+
+        yield return Task.WhenAll(setNameTask, setIDTask,setAgeTask,setOccupationTask);
 
         if (setNameTask.IsFaulted || setIDTask.IsFaulted)
         {
@@ -180,6 +194,51 @@ public class AuthenticationManager : MonoBehaviour
         else if (setNameTask.IsCompleted && setIDTask.IsCompleted)
         {
             Debug.Log("User data saved successfully!");
+        }
+    }
+
+    public IEnumerator ReadUserDataCoroutine(string userId)
+    {
+        // Reference to the Firebase Realtime Database
+        DatabaseReference reference = FirebaseDatabase.DefaultInstance.RootReference;
+
+        // Retrieve user data from the database for the specified userId
+        var userDataTask = reference.Child("users").Child(userId).GetValueAsync();
+
+        yield return new WaitUntil(() => userDataTask.IsCompleted);
+
+        if (userDataTask.IsCanceled)
+        {
+            Debug.LogError("ReadUserData was canceled.");
+            yield break;
+        }
+
+        if (userDataTask.IsFaulted)
+        {
+            Debug.LogError("ReadUserData encountered an error: " + userDataTask.Exception);
+            yield break;
+        }
+
+        // Retrieve user data from the database
+        DataSnapshot snapshot = userDataTask.Result;
+        if (snapshot != null && snapshot.Exists)
+        {
+            // Extract user data
+            username = snapshot.Child("UserName").Value.ToString();
+            userID = snapshot.Child("UserId").Value.ToString();
+            age = snapshot.Child("Age").Value.ToString();
+            occupation = snapshot.Child("Occupation").Value.ToString();
+
+            UIManagerMain.instance.nameInputField.text = username;
+            UIManagerMain.instance.ageInputField.text = age;
+            UIManagerMain.instance.occupationInputField.text = occupation;
+
+            // Do something with the retrieved data
+            Debug.Log("User data retrieved successfully - UserName: " + username + ", UserID: " + userID);
+        }
+        else
+        {
+            Debug.LogError("No user data found for UserID: " + userId);
         }
     }
 
