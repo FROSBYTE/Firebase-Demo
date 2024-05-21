@@ -2,6 +2,7 @@ using Firebase.Database;
 using Firebase.Extensions;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 
@@ -65,7 +66,6 @@ public class AuthenticationManager : MonoBehaviour
     public void LoginAccount()
     {
         StartCoroutine(LoginCoroutine());
-       
     }
 
     public void ForgotPassword()
@@ -97,6 +97,8 @@ public class AuthenticationManager : MonoBehaviour
         // Firebase user has been created.
         Firebase.Auth.AuthResult result = createUserTask.Result;
 
+        createDebugText.text = "User Created Succesfully";
+
         ClearInputFields();
        
         StartCoroutine(LoginCoroutine());
@@ -110,7 +112,7 @@ public class AuthenticationManager : MonoBehaviour
         // Wait until the sign-in task is complete
         while (!signInTask.IsCompleted)
         {
-            yield return null; // Wait for the next frame
+            yield return null;
         }
 
         if (signInTask.IsCanceled)
@@ -121,7 +123,7 @@ public class AuthenticationManager : MonoBehaviour
 
         if (signInTask.IsFaulted)
         {
-            loginDebugText.text = "Sign-In encountered an error: " + signInTask.Exception;
+            loginDebugText.text = "Incorrect Credentials";
             yield break;
         }
 
@@ -157,22 +159,28 @@ public class AuthenticationManager : MonoBehaviour
             yield break;
         }
 
-        // Password reset email sent successfully
         Debug.Log("Password reset email sent successfully to: " + forgotPassEmailID.text);
         forgotPassDebugText.text = "Password reset email sent successfully";
     }
-
 
     private IEnumerator SaveUserData()
     {
         // Reference to the Firebase Realtime Database
         DatabaseReference reference = FirebaseDatabase.DefaultInstance.RootReference;
 
-        // Store user data under the "users" node with the user's ID as the key
-        reference.Child("users").Child(userID).Child("userName").SetValueAsync(username);
-        reference.Child("users").Child(userID).Child("userId").SetValueAsync(userID);
+        Task setNameTask = reference.Child("users").Child(userID).Child("userName").SetValueAsync(username);
+        Task setIDTask = reference.Child("users").Child(userID).Child("userId").SetValueAsync(userID);
 
-        yield return null;
+        yield return Task.WhenAll(setNameTask, setIDTask);
+
+        if (setNameTask.IsFaulted || setIDTask.IsFaulted)
+        {
+            Debug.LogError("Failed to save user data: " + setNameTask.Exception + ", " + setIDTask.Exception);
+        }
+        else if (setNameTask.IsCompleted && setIDTask.IsCompleted)
+        {
+            Debug.Log("User data saved successfully!");
+        }
     }
 
     #endregion
