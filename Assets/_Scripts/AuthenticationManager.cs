@@ -65,7 +65,7 @@ public class AuthenticationManager : MonoBehaviour
 
     public void LoginAccount()
     {
-        StartCoroutine(LoginCoroutine());
+        StartCoroutine(LoginCoroutine(loginEmailID.text, loginPassword.text));
     }
 
     public void ForgotPassword()
@@ -101,13 +101,13 @@ public class AuthenticationManager : MonoBehaviour
 
         ClearInputFields();
        
-        StartCoroutine(LoginCoroutine());
+        StartCoroutine(LoginCoroutine(createEmailID.text,createPassword.text));
     }
 
-    private IEnumerator LoginCoroutine()
+    private IEnumerator LoginCoroutine(string emailID,string password)
     {
         Firebase.Auth.FirebaseAuth auth = Firebase.Auth.FirebaseAuth.DefaultInstance;
-        var signInTask = auth.SignInWithEmailAndPasswordAsync(loginEmailID.text, loginPassword.text);
+        var signInTask = auth.SignInWithEmailAndPasswordAsync(emailID, password);
 
         // Wait until the sign-in task is complete
         while (!signInTask.IsCompleted)
