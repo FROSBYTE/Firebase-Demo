@@ -113,7 +113,7 @@ public class AuthenticationManager : MonoBehaviour
 
         ClearInputFields();
 
-        StartCoroutine(LoginCoroutine(createEmailID.text,createPassword.text));
+        //StartCoroutine(LoginCoroutine(createEmailID.text,createPassword.text));
     }
 
     private IEnumerator LoginCoroutine(string emailID,string password)
@@ -145,7 +145,7 @@ public class AuthenticationManager : MonoBehaviour
 
         userID = result.User.UserId;
 
-        StartCoroutine(SaveUserData());
+        //StartCoroutine(SaveUserData());
 
         ClearInputFields();
         UIManager.instance.SwitchScene();
