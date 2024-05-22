@@ -107,14 +107,50 @@ public class AuthenticationManager : MonoBehaviour
 
         // Firebase user has been created.
         Firebase.Auth.AuthResult result = createUserTask.Result;
+        Firebase.Auth.FirebaseUser newUser = result.User;
 
-        createDebugText.text = "User Created Succesfully";
-        username = createName.text;
+        if (newUser == null)
+        {
+            createDebugText.text = "Create User encountered an error: user is null";
+            yield break;
+        }
+
+        createDebugText.text = "User Created Successfully";
+
+        // Set the display name
+        string displayName = createName.text;
+        Firebase.Auth.UserProfile profile = new Firebase.Auth.UserProfile
+        {
+            DisplayName = displayName
+        };
+
+        var updateProfileTask = newUser.UpdateUserProfileAsync(profile);
+
+        yield return new WaitUntil(() => updateProfileTask.IsCompleted);
+
+        if (updateProfileTask.IsCanceled)
+        {
+            createDebugText.text = "Update user profile was canceled";
+            yield break;
+        }
+
+        if (updateProfileTask.IsFaulted)
+        {
+            createDebugText.text = "Update user profile encountered an error: " + updateProfileTask.Exception;
+            yield break;
+        }
+
+        if (updateProfileTask.IsCompleted)
+        {
+            createDebugText.text = "User profile updated successfully";
+        }
 
         ClearInputFields();
 
-        //StartCoroutine(LoginCoroutine(createEmailID.text,createPassword.text));
+        // Optionally, log the user in
+        //StartCoroutine(LoginCoroutine(createEmailID.text, createPassword.text));
     }
+
 
     private IEnumerator LoginCoroutine(string emailID,string password)
     {
@@ -144,10 +180,11 @@ public class AuthenticationManager : MonoBehaviour
         loginDebugText.text = "Sign-In Succesfull";
 
         userID = result.User.UserId;
+        username = result.User.DisplayName;
 
         //StartCoroutine(SaveUserData());
 
-        ClearInputFields();
+        //ClearInputFields();
         UIManager.instance.SwitchScene();
     }
 

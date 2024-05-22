@@ -18,9 +18,9 @@ public class UIManagerMain : MonoBehaviour
 
     private void Start()
     {
-        AuthenticationManager.Instance.username = nameInputField.text;
+        nameInputField.text = AuthenticationManager.Instance.username;
         //StartCoroutine(AuthenticationManager.Instance.SaveUserData());
-        //GetData_Button();
+        GetData_Button();
     }
 
     public void GetData_Button()
