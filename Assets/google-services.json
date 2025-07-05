@@ -3,7 +3,7 @@
     "project_number": "580687409144",
     "firebase_url": "https://firbase--learning-default-rtdb.firebaseio.com",
     "project_id": "firbase--learning",
-    "storage_bucket": "firbase--learning.appspot.com"
+    "storage_bucket": "firbase--learning.firebasestorage.app"
   },
   "client": [
     {
