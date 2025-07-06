@@ -12,7 +12,7 @@ public class AuthenticationManager : MonoBehaviour
 
     [Header("Firebase References")]
     Firebase.FirebaseApp app; // Declaration of FirebaseApp variable
-    Firebase.Auth.FirebaseAuth auth; // Declaration of FirebaseAuth variable
+    public Firebase.Auth.FirebaseAuth auth; // Declaration of FirebaseAuth variable
 
     public string username;
     public string userID;
@@ -227,10 +227,12 @@ public class AuthenticationManager : MonoBehaviour
         if (setNameTask.IsFaulted || setIDTask.IsFaulted)
         {
             Debug.LogError("Failed to save user data: " + setNameTask.Exception + ", " + setIDTask.Exception);
+            UIManagerMain.instance.debugText.text = "Failed to save user data: " + setNameTask.Exception + ", " + setIDTask.Exception;
         }
         else if (setNameTask.IsCompleted && setIDTask.IsCompleted)
         {
             Debug.Log("User data saved successfully!");
+            UIManagerMain.instance.debugText.text = "User data saved successfully!";
         }
     }
 
@@ -247,12 +249,14 @@ public class AuthenticationManager : MonoBehaviour
         if (userDataTask.IsCanceled)
         {
             Debug.LogError("ReadUserData was canceled.");
+            UIManagerMain.instance.debugText.text = "ReadUserData was canceled.";
             yield break;
         }
 
         if (userDataTask.IsFaulted)
         {
             Debug.LogError("ReadUserData encountered an error: " + userDataTask.Exception);
+            UIManagerMain.instance.debugText.text = "ReadUserData encountered an error: " + userDataTask.Exception;
             yield break;
         }
 
@@ -272,6 +276,7 @@ public class AuthenticationManager : MonoBehaviour
 
             // Do something with the retrieved data
             Debug.Log("User data retrieved successfully - UserName: " + username + ", UserID: " + userID);
+            UIManagerMain.instance.debugText.text = "User data retrieved successfully";
         }
         else
         {
